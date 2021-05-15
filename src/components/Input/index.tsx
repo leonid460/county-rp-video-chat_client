@@ -1,28 +1,34 @@
 import { HTMLProps } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import { Colors } from 'constants/ui';
 
 const useStyles = makeStyles((theme) => ({
   input: {
     padding: '12px',
-    border: '1px solid #E6EBEE',
+    border: `1px solid ${Colors.border}`,
     borderRadius: '4px',
     outline: 'none',
-    background: 'white',
+    overflow: 'hidden',
+    background: Colors.surface,
     color: 'black',
     transition: 'border-color 0.2s ease',
     ...theme.typography.body1,
 
     '&::placeholder': {
-      color: '#717E96'
+      color: Colors.secondary
     },
 
     '&:hover': {
-      borderColor: '#717E96'
+      borderColor: Colors.secondary
     },
 
     '&:focus': {
-      borderColor: '#0653C0'
+      borderColor: Colors.primary
     },
+
+    '&:disabled': {
+      opacity: 0.5
+    }
   }
 }))
 

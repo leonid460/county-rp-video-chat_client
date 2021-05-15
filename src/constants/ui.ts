@@ -13,3 +13,5 @@ export const Colors = {
   onSurface: '#000000',
   onError: '#FFFFFF'
 }
+
+export const boxShadow = '2px 2px 4px rgba(0, 0, 0, 0.1)';
