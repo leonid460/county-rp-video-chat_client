@@ -8,6 +8,10 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     height: '100%',
     width: '100%'
+  },
+  layoutInnerWrapper: {
+    width: '100%',
+    height: 'calc(100% - 66px)'
   }
 }))
 
@@ -19,7 +23,9 @@ export const MainLayout: FC = ({ children }) => {
   return (
     <div className={classes.layoutContainer}>
       <Header />
-      {children}
+      <div className={classes.layoutInnerWrapper}>
+        {children}
+      </div>
     </div>
   )
 }

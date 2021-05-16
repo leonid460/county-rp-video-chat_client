@@ -51,6 +51,50 @@ const useStyles = makeStyles((theme) => {
           background: textColor
         }
       }
+    },
+    secondary: {
+      position: 'relative',
+      padding: '10px 20px',
+      border: 'none',
+      outline: 'none',
+      borderRadius,
+      background: 'none',
+      color: Colors.primary,
+      fontSize: '13px',
+      fontWeight: 500,
+      textTransform: 'capitalize',
+      cursor: 'pointer',
+      ...theme.typography.button,
+
+      '&:before': {
+        position: 'absolute',
+        content: `''`,
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        opacity: 0,
+        borderRadius,
+        background: Colors.primary,
+        transition: 'opacity 0.2s ease'
+      },
+
+      '&:hover:before': {
+        opacity: 0.15
+      },
+
+      '&:active:before': {
+        opacity: 0.3,
+      },
+
+      '&:disabled': {
+        cursor: 'not-allowed',
+
+        '&:before': {
+          opacity: 0.3,
+          background: Colors.primary
+        }
+      }
     }
   };
 });
@@ -60,3 +104,9 @@ export const PrimaryButton = ({ className, ...props}: ButtonHTMLAttributes<HTMLB
 
   return <button className={`${classes.primary} ${className}`} {...props} />;
 };
+
+export const SecondaryButton = ({ className, ...props}: ButtonHTMLAttributes<HTMLButtonElement>) => {
+  const classes = useStyles();
+
+  return <button className={`${classes.secondary} ${className}`} {...props} />;
+}

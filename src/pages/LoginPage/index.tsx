@@ -1,18 +1,18 @@
-import { useState } from 'react';
 import './index.scss';
-import { useSocketContext } from 'modules/Context';
+import { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Typography } from '@material-ui/core';
+import { useVideoChatContext } from 'modules/Context';
 import { Input } from 'components/Input';
 import { PrimaryButton } from 'components/Button';
-import { useHistory } from 'react-router-dom';
 
 export const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [_username, _setUsername] = useState('');
   const history = useHistory();
-  const { setName } = useSocketContext();
+  const { setUsername } = useVideoChatContext();
 
   const submit = () => {
-    setName(username);
+    setUsername(_username);
     history.push('/');
   }
 
@@ -23,8 +23,8 @@ export const LoginPage = () => {
         <Input
           className="login-page__input"
           placeholder="Имя пользователя"
-          value={username}
-          onChange={event => setUsername(event.currentTarget.value)}
+          value={_username}
+          onChange={event => _setUsername(event.currentTarget.value)}
         />
         <Input className="login-page__input" placeholder="Пароль" disabled />
         <PrimaryButton onClick={submit}>Войти</PrimaryButton>

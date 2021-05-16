@@ -1,6 +1,6 @@
 import { makeStyles } from '@material-ui/core/styles';
 import { Typography } from '@material-ui/core';
-import { useSocketContext } from 'modules/Context';
+import { useVideoChatContext } from 'modules/Context';
 import { Colors } from 'constants/ui';
 
 const useStyles = makeStyles((theme) => ({
@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
 
 export const Header = () => {
   const classes = useStyles();
-  const { name } = useSocketContext();
+  const { username } = useVideoChatContext();
 
   return (
     <div className={classes.headerContainer}>
@@ -39,7 +39,7 @@ export const Header = () => {
         County RP Video Chat
       </Typography>
       <Typography className={classes.headerTitle} variant="body1">
-        {name}
+        {username}
       </Typography>
     </div>
   );

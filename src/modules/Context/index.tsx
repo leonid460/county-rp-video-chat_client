@@ -1,149 +1,192 @@
-/* eslint-disable */
-import React, { createContext, useState, useRef, useEffect, useContext } from 'react';
-import { io } from 'socket.io-client';
+import { createContext, useState, useEffect, useContext, useRef, FC } from 'react';
+import { useHistory } from 'react-router-dom';
+import { io, Socket } from 'socket.io-client';
 import Peer from 'simple-peer';
+import { CallNotification } from 'modules/CallNotification';
+import { Url } from 'constants/socket';
 
-interface ISocketContextValue {
-  call: {isReceivingCall: boolean, from: string, name: string, signal: string};
-  callAccepted: boolean
-  myVideo: React.MutableRefObject<HTMLVideoElement | null>;
-  userVideo: React.MutableRefObject<HTMLVideoElement | null>;
-  stream?: MediaStream;
-  name: string;
-  setName: React.Dispatch<React.SetStateAction<string>>;
-  callEnded: boolean;
-  me: string;
-  callUser: (id: string) => void;
-  leaveCall: () => void;
+interface IVideoChatContext {
+  username: string;
+  setUsername: (value: string) => void;
+  receiverName: string;
+  setReceiverName: (value: string) => void;
+  callUser: (username: string) => void;
   answerCall: () => void;
-  sendMessage: (text: string) => void;
-  messages: {sender: string, text: string}[]
+  callAccepted: boolean;
+  userStream: MediaStream | null;
+  personToCallStream: MediaStream | null;
+  call: {isReceivingCall: boolean, from: string, signal: string};
+  messages: { sender: string, text: string }[];
+  sendMessage: (message: string) => void;
+  declineCall: () => void;
+  leaveCall: () => void;
 }
 
-const SocketContext = createContext<ISocketContextValue | null>(null);
+const VideoChatContext = createContext<IVideoChatContext | null>(null);
 
-const socket = io('http://localhost:5000');
+let socket: Socket | null = null;
 
-export const ContextProvider: React.FC = ({ children }) => {
+export const VideoChatContextProvider: FC = ({ children }) => {
+  const [userStream, setUserStream] = useState<MediaStream | null>(null);
+  const [personToCallStream, setPersonToCallStream] = useState<MediaStream | null>(null);
+  const [username, setUsername] = useState('');
+  const [receiverName, setReceiverName] = useState('');
+  const [call, setCall] = useState({ isReceivingCall: false, from: '', signal: '' });
   const [callAccepted, setCallAccepted] = useState(false);
-  const [callEnded, setCallEnded] = useState(false);
-  const [stream, setStream] = useState<MediaStream>();
-  const [name, setName] = useState('');
-  const [call, setCall] = useState({ isReceivingCall: false, from: '', name: '', signal: '' });
-  const [me, setMe] = useState('');
-  const [messages, setMessages] = useState<{ sender: string, text: string }[]>([])
+  const [messages, setMessages] = useState<{ sender: string, text: string }[]>([]);
+  const history = useHistory();
 
-  const myVideo = useRef<HTMLVideoElement | null>(null);
-  const userVideo = useRef<HTMLVideoElement | null>(null);
-  const connectionRef = useRef<Peer.Instance>();
+  const connectionRef = useRef<Peer.Instance | null>(null);
 
-  const answerCall = () => {
-    setCallAccepted(true);
+  const callUser = (userToCall: string) => {
+    if (!(userStream && socket)) {
+      return;
+    }
 
-    const peer = new Peer({ initiator: false, trickle: false, stream });
+    const peer = new Peer({ initiator: true, trickle: false, objectMode: true, stream: userStream });
+
+    connectionRef.current = peer;
 
     peer.on('signal', (data) => {
-      socket.emit('answerCall', { signal: data, to: call.from });
+      socket?.emit('callUser', { userToCall, signalData: data, callerUsername: username });
     });
 
-    peer.on('data', (data: string) => setMessages([...messages, { sender: "Other", text: data.toString() }]))
+    peer.on('data', data => {
+      const messageText = data.toString();
+
+      setMessages(messagesList => {
+        console.log({ messages, messageText });
+
+        return [...messagesList, { sender: userToCall, text: messageText }]
+      })
+    });
 
     peer.on('stream', (currentStream) => {
-      if (userVideo.current) {
-        userVideo.current.srcObject = currentStream;
-      }
+      setPersonToCallStream(currentStream);
+    });
+
+    socket.on('callAccepted', (signal) => {
+      setCallAccepted(true);
+      history.push('/call');
+      setReceiverName(userToCall);
+
+      connectionRef.current?.signal(signal);
+    });
+  };
+
+  const answerCall = () => {
+    if (!(userStream && socket)){
+      return;
+    }
+
+    setCallAccepted(true);
+
+    const peer = new Peer({ initiator: false, trickle: false, stream: userStream });
+
+    peer.on('signal', (data) => {
+      socket?.emit('answerCall', { signal: data, to: call.from });
+    });
+
+    peer.on('data', (data: string) => setMessages(state => {
+      return [...state, { sender: call.from, text: data.toString() }]
+    }));
+
+    peer.on('stream', (currentStream) => {
+      console.log('stream');
+      console.log({ currentStream });
+      setPersonToCallStream(currentStream);
     });
 
     peer.signal(call.signal);
 
     connectionRef.current = peer;
-  };
-
-  const callUser = (id: string) => {
-    const peer = new Peer({ initiator: true, trickle: false, objectMode: true, stream });
-
-    peer.on('signal', (data) => {
-      socket.emit('callUser', { userToCall: id, signalData: data, from: me, name });
-    });
-
-    peer.on('data', data => setMessages([...messages, { sender: "Other", text: data.toString() }]))
-
-    peer.on('stream', (currentStream) => {
-      if (userVideo.current) {
-        userVideo.current.srcObject = currentStream;
-      }
-    });
-
-    socket.on('callAccepted', (signal) => {
-      setCallAccepted(true);
-
-      peer.signal(signal);
-    });
-
-    connectionRef.current = peer;
+    history.push('/call');
   };
 
   const sendMessage = (text: string) => {
     if (connectionRef.current) {
-      connectionRef.current.send(text)
+      setMessages([...messages, { sender: username, text }])
+      connectionRef.current.send(text);
     }
-  }
-
-  const leaveCall = () => {
-    setCallEnded(true);
-
-    if (connectionRef.current) {
-      connectionRef.current.destroy();
-    }
-
-    window.location.reload();
   };
 
-  useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((currentStream) => {
-        setStream(currentStream);
+  const declineCall = () => {
+    setCall({ isReceivingCall: false, from: '', signal: '' });
+    setReceiverName('');
+  };
 
-        if (myVideo.current) {
-          myVideo.current.srcObject = currentStream;
-        }
+  const leaveCall = () => {
+    declineCall();
+    connectionRef.current?.destroy();
+    setCallAccepted(false);
+    setPersonToCallStream(null);
+    history.push('/');
+  }
+
+  useEffect(() => {
+    let newStream: MediaStream | null = null;
+
+    if (!navigator) {
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        setUserStream(stream);
+        newStream = stream;
       });
 
-    socket.on('me', (id) => setMe(id));
+    return () => {
+      const audioTracks = newStream?.getAudioTracks();
+      const videoTracks = newStream?.getVideoTracks();
 
-    socket.on('callUser', ({ from, name: callerName, signal }) => {
-      setCall({ isReceivingCall: true, from, name: callerName, signal });
-    });
+      audioTracks?.forEach(track => track.stop());
+      videoTracks?.forEach(track => track.stop());
+    }
   }, []);
 
-  return (
-    <SocketContext.Provider value={{
-      call,
-      callAccepted,
-      myVideo,
-      userVideo,
-      stream,
-      name,
-      setName,
-      callEnded,
-      me,
-      callUser,
-      leaveCall,
-      answerCall,
-      sendMessage,
-      messages
-    }}
-    >
-      {children}
-    </SocketContext.Provider>
-  );
-};
+  useEffect(() => {
+    if (username) {
+      socket = io(Url);
+      socket.emit('setUsername', { username });
 
-export function useSocketContext() {
-  const contextValue = useContext(SocketContext);
+      socket.on('callUser', ({ callerUsername, signal }) => {
+        setCall({ isReceivingCall: true, from: callerUsername, signal });
+        setReceiverName(callerUsername);
+      });
+    }
+  }, [username]);
+
+  return (
+    <VideoChatContext.Provider
+      value={{
+        username,
+        setUsername,
+        receiverName,
+        setReceiverName,
+        callAccepted,
+        callUser,
+        answerCall,
+        userStream,
+        personToCallStream,
+        call,
+        messages,
+        sendMessage,
+        declineCall,
+        leaveCall,
+      }}
+    >
+      <CallNotification />
+      {children}
+    </VideoChatContext.Provider>
+  )
+}
+
+export function useVideoChatContext() {
+  const contextValue = useContext(VideoChatContext);
 
   if (!contextValue) {
-    throw new Error('useSocketContext must be used within ContextProvider');
+    throw new Error('useVideoChatContext must be used within VideoChatContextProvider');
   }
 
   return contextValue;

@@ -17,7 +17,8 @@ const useStyles = makeStyles((theme) => ({
     height: '100%',
     width: '100%',
     borderRadius: '4px',
-    background: 'black'
+    background: 'black',
+    transform: 'scaleX(-1)'
   }
 }));
 

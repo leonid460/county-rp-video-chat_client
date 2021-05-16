@@ -1,20 +1,9 @@
 import './App.scss';
-import { Switch, Route, Redirect, useHistory } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import { LoginPage } from 'pages/LoginPage';
 import { MainPage } from 'pages/MainPage';
-import { useSocketContext } from 'modules/Context';
-import {useEffect} from "react";
-
-function useAuthCheck() {
-  const { name } = useSocketContext();
-  const history = useHistory();
-
-  useEffect(() => {
-    if (!name) {
-      history.push('/login');
-    }
-  }, [history, name]);
-}
+import { CallPage } from 'pages/CallPage';
+import { useAuthCheck } from './useAuthCheck';
 
 const App = () => {
   useAuthCheck();
@@ -28,6 +17,10 @@ const App = () => {
 
         <Route exact path="/">
           <MainPage />
+        </Route>
+
+        <Route exact path="/call">
+          <CallPage />
         </Route>
 
         <Redirect to="/" />

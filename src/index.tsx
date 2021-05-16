@@ -5,16 +5,16 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { defaultTheme } from 'themes/default';
 import { ThemeProvider } from '@material-ui/core';
-import { ContextProvider } from 'modules/Context';
+import { VideoChatContextProvider } from 'modules/Context';
 import { BrowserRouter } from 'react-router-dom';
 
 ReactDOM.render(
   <React.StrictMode>
     <ThemeProvider theme={defaultTheme}>
       <BrowserRouter>
-        <ContextProvider>
+        <VideoChatContextProvider>
           <App />
-        </ContextProvider>
+        </VideoChatContextProvider>
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>,

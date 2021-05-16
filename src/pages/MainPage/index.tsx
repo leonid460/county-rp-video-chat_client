@@ -1,7 +1,10 @@
-import { MainLayout } from 'modules/MainLayout';
+import {useEffect, useRef, useState} from 'react';
+import { useHistory } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
+import { Typography } from '@material-ui/core';
+import { MainLayout } from 'modules/MainLayout';
+import { useVideoChatContext } from 'modules/Context';
 import { VideoPlayer } from 'components/VideoPlayer';
-import {Typography} from "@material-ui/core";
 import { Input } from 'components/Input';
 import { PrimaryButton } from 'components/Button';
 import { Colors, boxShadow } from 'constants/ui';
@@ -40,19 +43,40 @@ const useStyles = makeStyles({
 });
 
 export const MainPage = () => {
+  const [userToCall, setUserToCall] = useState('');
+  const { userStream, setReceiverName, callUser } = useVideoChatContext();
+  let videoRef = useRef<HTMLVideoElement | null>(null);
+  const history = useHistory();
+
   const classes = useStyles();
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = userStream;
+    }
+  }, [userStream]);
+
+  const handleCall = () => {
+    setReceiverName(userToCall);
+    callUser(userToCall);
+  };
 
   return (
     <MainLayout>
       <div className={classes.mainPageContainer }>
-        <VideoPlayer className={classes.videoPlayer} />
+        <VideoPlayer className={classes.videoPlayer} video={videoRef} />
 
         <div className={classes.controlPanelContainer}>
           <Typography className={classes.controlPanelTitle} variant="h3">Кому позвонить?</Typography>
 
-          <Input className={classes.controlPanelUserInput} placeholder="Логин пользователя" />
+          <Input
+            className={classes.controlPanelUserInput}
+            placeholder="Логин пользователя"
+            value={userToCall}
+            onChange={event => setUserToCall(event.currentTarget.value)}
+          />
 
-          <PrimaryButton>Позвонить</PrimaryButton>
+          <PrimaryButton onClick={handleCall}>Позвонить</PrimaryButton>
         </div>
       </div>
     </MainLayout>
