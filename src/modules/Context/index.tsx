@@ -38,20 +38,32 @@ export const VideoChatContextProvider: FC = ({ children }) => {
 
   const connectionRef = useRef<Peer.Instance | null>(null);
 
+  const connectToSocket = (username: string) => {
+    socket = io(Url);
+    socket.emit('setUsername', { username });
+
+    socket!.on('callUser', ({ callerUsername, signal }) => {
+      setCall({ isReceivingCall: true, from: callerUsername, signal });
+      setReceiverName(callerUsername);
+    });
+  }
+
+  const disconnectFromSocket = () => {
+    socket?.disconnect();
+  }
+
   const callUser = (userToCall: string) => {
     if (!(userStream && socket)) {
       return;
     }
 
-    const peer = new Peer({ initiator: true, trickle: false, objectMode: true, stream: userStream });
+    connectionRef.current = new Peer({ initiator: true, trickle: false, objectMode: true, stream: userStream });
 
-    connectionRef.current = peer;
-
-    peer.on('signal', (data) => {
+    connectionRef.current.on('signal', (data) => {
       socket?.emit('callUser', { userToCall, signalData: data, callerUsername: username });
     });
 
-    peer.on('data', data => {
+    connectionRef.current.on('data', data => {
       const messageText = data.toString();
 
       setMessages(messagesList => {
@@ -61,13 +73,18 @@ export const VideoChatContextProvider: FC = ({ children }) => {
       })
     });
 
-    peer.on('stream', (currentStream) => {
+    connectionRef.current.on('stream', (currentStream) => {
       setPersonToCallStream(currentStream);
+      history.push('/call');
     });
+
+    connectionRef.current.on('close', () => {
+      console.log('CLOSE');
+      closeCall();
+    })
 
     socket.on('callAccepted', (signal) => {
       setCallAccepted(true);
-      history.push('/call');
       setReceiverName(userToCall);
 
       connectionRef.current?.signal(signal);
@@ -81,26 +98,28 @@ export const VideoChatContextProvider: FC = ({ children }) => {
 
     setCallAccepted(true);
 
-    const peer = new Peer({ initiator: false, trickle: false, stream: userStream });
+    connectionRef.current = new Peer({ initiator: false, trickle: false, stream: userStream });
 
-    peer.on('signal', (data) => {
+    connectionRef.current.on('signal', (data) => {
       socket?.emit('answerCall', { signal: data, to: call.from });
     });
 
-    peer.on('data', (data: string) => setMessages(state => {
+    connectionRef.current.on('data', (data: string) => setMessages(state => {
       return [...state, { sender: call.from, text: data.toString() }]
     }));
 
-    peer.on('stream', (currentStream) => {
-      console.log('stream');
-      console.log({ currentStream });
+    connectionRef.current.on('stream', (currentStream) => {
       setPersonToCallStream(currentStream);
+      history.push('/call');
     });
 
-    peer.signal(call.signal);
+    connectionRef.current.on('close', () => {
+      console.log('CLOSE');
+      closeCall();
+    })
 
-    connectionRef.current = peer;
-    history.push('/call');
+    console.log(call.signal);
+    connectionRef.current.signal(call.signal);
   };
 
   const sendMessage = (text: string) => {
@@ -110,17 +129,20 @@ export const VideoChatContextProvider: FC = ({ children }) => {
     }
   };
 
-  const declineCall = () => {
+  const closeCall = () => {
     setCall({ isReceivingCall: false, from: '', signal: '' });
     setReceiverName('');
-  };
-
-  const leaveCall = () => {
-    declineCall();
     connectionRef.current?.destroy();
+    connectionRef.current = null;
     setCallAccepted(false);
     setPersonToCallStream(null);
+    disconnectFromSocket();
+    connectToSocket(username);
     history.push('/');
+  }
+
+  const leaveCall = () => {
+    connectionRef.current?.emit('close');
   }
 
   useEffect(() => {
@@ -147,13 +169,7 @@ export const VideoChatContextProvider: FC = ({ children }) => {
 
   useEffect(() => {
     if (username) {
-      socket = io(Url);
-      socket.emit('setUsername', { username });
-
-      socket.on('callUser', ({ callerUsername, signal }) => {
-        setCall({ isReceivingCall: true, from: callerUsername, signal });
-        setReceiverName(callerUsername);
-      });
+      connectToSocket(username);
     }
   }, [username]);
 
@@ -172,7 +188,7 @@ export const VideoChatContextProvider: FC = ({ children }) => {
         call,
         messages,
         sendMessage,
-        declineCall,
+        declineCall: closeCall,
         leaveCall,
       }}
     >

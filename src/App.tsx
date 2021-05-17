@@ -1,6 +1,7 @@
 import './App.scss';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import { LoginPage } from 'pages/LoginPage';
+import { RegisterPage } from 'pages/RegisterPage';
 import { MainPage } from 'pages/MainPage';
 import { CallPage } from 'pages/CallPage';
 import { useAuthCheck } from './useAuthCheck';
@@ -13,6 +14,10 @@ const App = () => {
       <Switch>
         <Route exact path="/login">
           <LoginPage />
+        </Route>
+
+        <Route exact path="/register">
+          <RegisterPage />
         </Route>
 
         <Route exact path="/">

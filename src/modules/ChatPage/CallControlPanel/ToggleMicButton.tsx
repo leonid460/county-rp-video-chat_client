@@ -6,8 +6,6 @@ import { useStyles } from './controlButtonStyles';
 export const ToggleMicButton = ({ value, onClick }: IControlToggleButtonProps) => {
   const classes = useStyles();
 
-  console.log({ value });
-
   return (
     <div onClick={onClick} className={classes.controlButtonContainer}>
       {value ? <MicOn/> : <MicOff />}

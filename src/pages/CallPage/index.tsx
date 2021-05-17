@@ -51,12 +51,16 @@ export const CallPage = () => {
 
   useEffect(() => {
     if (videoRef.current) {
+      console.log('user stream connected');
+      console.log(userStream);
       videoRef.current.srcObject = userStream;
     }
   }, [userStream]);
 
   useEffect(() => {
     if (personToCallVideoRef.current) {
+      console.log('person to call stream connected');
+      console.log(personToCallStream);
       personToCallVideoRef.current.srcObject = personToCallStream;
     }
   }, [personToCallStream]);
