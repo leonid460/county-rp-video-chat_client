@@ -2,10 +2,14 @@ import { HTMLProps } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Colors } from 'constants/ui';
 
+interface IInputProps extends HTMLProps<HTMLInputElement> {
+  isInvalid?: boolean;
+}
+
 const useStyles = makeStyles((theme) => ({
   input: {
     padding: '12px',
-    border: `1px solid ${Colors.border}`,
+    border: ({ isInvalid }: { isInvalid?: boolean }) => `1px solid ${isInvalid ? Colors.error : Colors.border}`,
     borderRadius: '4px',
     outline: 'none',
     overflow: 'hidden',
@@ -32,8 +36,8 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export const Input = ({ className, ...props}: HTMLProps<HTMLInputElement>) => {
-  const classes = useStyles();
+export const Input = ({ className, isInvalid, ...props}: IInputProps) => {
+  const classes = useStyles({ isInvalid });
 
   return <input className={`${classes.input} ${className}`} {...props}/>
 }

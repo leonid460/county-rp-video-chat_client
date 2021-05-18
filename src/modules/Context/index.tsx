@@ -146,11 +146,15 @@ export const VideoChatContextProvider: FC = ({ children }) => {
   }
 
   useEffect(() => {
-    let newStream: MediaStream | null = null;
+    if (!username) {
+      return;
+    }
 
     if (!navigator) {
       return;
     }
+
+    let newStream: MediaStream | null = null;
 
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then(stream => {
@@ -165,7 +169,7 @@ export const VideoChatContextProvider: FC = ({ children }) => {
       audioTracks?.forEach(track => track.stop());
       videoTracks?.forEach(track => track.stop());
     }
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     if (username) {

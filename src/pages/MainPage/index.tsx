@@ -1,5 +1,4 @@
 import {useEffect, useRef, useState} from 'react';
-import { useHistory } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import { Typography } from '@material-ui/core';
 import { MainLayout } from 'modules/MainLayout';
@@ -45,8 +44,7 @@ const useStyles = makeStyles({
 export const MainPage = () => {
   const [userToCall, setUserToCall] = useState('');
   const { userStream, setReceiverName, callUser } = useVideoChatContext();
-  let videoRef = useRef<HTMLVideoElement | null>(null);
-  const history = useHistory();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const classes = useStyles();
 

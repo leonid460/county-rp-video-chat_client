@@ -2,11 +2,12 @@ import './index.scss';
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Typography } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import { useVideoChatContext } from 'modules/Context';
 import { Input } from 'components/Input';
 import { PrimaryButton } from 'components/Button';
-import { makeStyles } from '@material-ui/core/styles';
 import { Colors } from 'constants/ui';
+import { Url } from 'constants/socket';
 
 const useStyles = makeStyles((theme) => ({
   goToRegister: {
@@ -19,24 +20,56 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       color: Colors.primaryVariant,
     }
+  },
+  error: {
+    marginBottom: '16px',
+    ...theme.typography.body1,
+    fontWeight: 'bold',
+    color: Colors.error
   }
 }));
 
 export const LoginPage = () => {
   const classes = useStyles();
-  const [_username, _setUsername] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const history = useHistory();
-  const { setUsername } = useVideoChatContext();
-
-  const submit = () => {
-    setUsername(_username);
-    history.push('/');
-  };
+  const [error, setError] = useState('');
+  const { setUsername: setUsernameInContext } = useVideoChatContext();
 
   const goToRegister = () => {
     history.push('/register');
   };
+
+  const login = async () => {
+    const response = await fetch(`${Url}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      },
+      body: JSON.stringify({
+        username,
+        password
+      })
+    });
+
+    if (!response.ok) {
+      const { status } = response;
+
+      switch (status) {
+        case 400:
+          return setError('Неправильный запрос');
+        case 401:
+          return setError('Неверный пароль');
+        case 404:
+          return setError(`Пользователь ${username} не найден`);
+      }
+    }
+
+    setError('');
+    setUsernameInContext(username);
+    history.push('/');
+  }
 
   return (
     <div className="login-page__page-container">
@@ -45,19 +78,21 @@ export const LoginPage = () => {
         <Input
           className="login-page__input"
           placeholder="Имя пользователя"
-          value={_username}
-          onChange={event => _setUsername(event.currentTarget.value)}
+          value={username}
+          onChange={event => setUsername(event.currentTarget.value)}
         />
         <Input
           className="login-page__input"
           placeholder="Пароль"
+          type="password"
           value={password}
           onChange={event => setPassword(event.currentTarget.value)}
         />
         <div className={classes.goToRegister} onClick={goToRegister}>
           Нет аккаунта?
         </div>
-        <PrimaryButton onClick={submit}>Войти</PrimaryButton>
+        {!!error && <div className={classes.error}>{error}</div>}
+        <PrimaryButton onClick={login} disabled={!(username && password)}>Войти</PrimaryButton>
       </div>
     </div>
   )
