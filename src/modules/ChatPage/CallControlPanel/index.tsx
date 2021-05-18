@@ -35,7 +35,7 @@ export const CallControlPanel = () => {
     if (track) {
       track.enabled = isVidActive;
     }
-  }, [isVidActive]);
+  }, [isVidActive, userStream]);
 
   useEffect(() => {
     const track = userStream?.getAudioTracks()[0];
@@ -43,7 +43,7 @@ export const CallControlPanel = () => {
     if (track) {
       track.enabled = isMicActive;
     }
-  }, [isMicActive]);
+  }, [isMicActive, userStream]);
 
   return (
     <div className={classes.controlPanelContainer}>
