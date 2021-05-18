@@ -8,7 +8,7 @@ import { Input } from 'components/Input';
 import { PrimaryButton } from 'components/Button';
 import { Colors, boxShadow } from 'constants/ui';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   mainPageContainer: {
     display: 'flex',
     flexDirection: 'column',
@@ -34,30 +34,47 @@ const useStyles = makeStyles({
   controlPanelTitle: {
     margin: 0,
     marginBottom: '32px',
-    textAlign: 'center'
+    ...theme.typography.h3,
+    textAlign: 'center',
   },
   controlPanelUserInput: {
     marginBottom: '16px'
+  },
+  select: {
+    marginBottom: '16px'
+  },
+  controlPanelText: {
+    marginBottom: '16px',
+    ...theme.typography.body1,
+    fontWeight: 'bold',
+    textAlign: 'center',
   }
-});
+}));
 
 export const MainPage = () => {
   const [userToCall, setUserToCall] = useState('');
-  const { userStream, setReceiverName, callUser } = useVideoChatContext();
+  const { userStream, setReceiverName, callUser, availableUsers, username } = useVideoChatContext();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [selectedUser, setSelectedUser] = useState('');
 
   const classes = useStyles();
+
+  const handleCall = () => {
+    setReceiverName(userToCall);
+    callUser(userToCall);
+  };
+
+  const handleSelect = (value: string) => {
+    console.log(value);
+    setSelectedUser(value);
+    setUserToCall(value);
+  }
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = userStream;
     }
   }, [userStream]);
-
-  const handleCall = () => {
-    setReceiverName(userToCall);
-    callUser(userToCall);
-  };
 
   return (
     <MainLayout>
@@ -74,7 +91,24 @@ export const MainPage = () => {
             onChange={event => setUserToCall(event.currentTarget.value)}
           />
 
-          <PrimaryButton onClick={handleCall}>Позвонить</PrimaryButton>
+          <span className={classes.controlPanelText}>или</span>
+
+          <select
+            className={classes.select}
+            onChange={event => handleSelect(event.currentTarget.value)}
+            value={selectedUser}
+          >
+            <option value={''}>-</option>
+            {availableUsers.map(username => (
+              <option value={username} key={username}>
+                {username}
+              </option>
+            ))}
+          </select>
+
+          <PrimaryButton onClick={handleCall} disabled={username === userToCall}>
+            Позвонить
+          </PrimaryButton>
         </div>
       </div>
     </MainLayout>

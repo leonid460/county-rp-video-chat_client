@@ -20,6 +20,7 @@ interface IVideoChatContext {
   sendMessage: (message: string) => void;
   declineCall: () => void;
   leaveCall: () => void;
+  availableUsers: string[];
 }
 
 const VideoChatContext = createContext<IVideoChatContext | null>(null);
@@ -34,6 +35,7 @@ export const VideoChatContextProvider: FC = ({ children }) => {
   const [call, setCall] = useState({ isReceivingCall: false, from: '', signal: '' });
   const [callAccepted, setCallAccepted] = useState(false);
   const [messages, setMessages] = useState<{ sender: string, text: string }[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<string[]>([]);
   const history = useHistory();
 
   const connectionRef = useRef<Peer.Instance | null>(null);
@@ -45,6 +47,14 @@ export const VideoChatContextProvider: FC = ({ children }) => {
     socket!.on('callUser', ({ callerUsername, signal }) => {
       setCall({ isReceivingCall: true, from: callerUsername, signal });
       setReceiverName(callerUsername);
+    });
+
+    socket.on('userConnect', ({ currentUsers }) => {
+      setAvailableUsers(currentUsers.filter((user: string) => user !== username));
+    });
+
+    socket.on('userDisconnect', ({ currentUsers }) => {
+      setAvailableUsers(currentUsers.filter((user: string) => user !== username));
     });
   }
 
@@ -194,6 +204,7 @@ export const VideoChatContextProvider: FC = ({ children }) => {
         sendMessage,
         declineCall: closeCall,
         leaveCall,
+        availableUsers
       }}
     >
       <CallNotification />
