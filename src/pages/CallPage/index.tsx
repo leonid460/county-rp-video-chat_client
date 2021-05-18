@@ -62,6 +62,22 @@ export const CallPage = () => {
       console.log('person to call stream connected');
       console.log(personToCallStream);
       personToCallVideoRef.current.srcObject = personToCallStream;
+
+      if (personToCallStream) {
+        const ctx = new AudioContext();
+        const audio = new Audio();
+        audio.srcObject = personToCallStream;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = .5;
+
+        audio.onloadedmetadata = function() {
+          const source = ctx.createMediaStreamSource(personToCallStream);
+          audio.play();
+          audio.muted = true;
+          source.connect(gainNode);
+          gainNode.connect(ctx.destination);
+        }
+      }
     }
   }, [personToCallStream]);
 

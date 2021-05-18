@@ -174,22 +174,7 @@ export const VideoChatContextProvider: FC = ({ children }) => {
         const audioTracks = newStream?.getAudioTracks();
 
         console.log(audioTracks);
-
-        const ctx = new AudioContext();
-        const audio = new Audio();
-        audio.srcObject = stream;
-        const gainNode = ctx.createGain();
-        gainNode.gain.value = .5;
-
-        audio.onloadedmetadata = function() {
-          const source = ctx.createMediaStreamSource(stream);
-          audio.play();
-          audio.muted = true;
-          source.connect(gainNode);
-          gainNode.connect(ctx.destination);
-        }
       });
-
 
     return () => {
       const audioTracks = newStream?.getAudioTracks();
